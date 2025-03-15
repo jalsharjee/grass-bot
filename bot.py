@@ -16,33 +16,48 @@ logger = logging.getLogger(__name__)
 
 class GrassBot:
     def __init__(self):
-        self.base_url = "https://api.getgrass.io"  # Base URL
-        self.auth_token = os.getenv("AUTH_TOKEN")  # Grass API token
+        self.base_url = "https://api.getgrass.io"
+        self.auth_token = os.getenv("AUTH_TOKEN")
         self.telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
         self.telegram_channel_id = os.getenv("TELEGRAM_CHANNEL_ID")
-        self.encryption_key = os.getenv("ENCRYPTION_KEY").encode()
-        self.cipher = Fernet(self.encryption_key)
+        self.encryption_key = os.getenv("ENCRYPTION_KEY")
+
+        # Validate environment variables
+        required_vars = {
+            "AUTH_TOKEN": self.auth_token,
+            "TELEGRAM_BOT_TOKEN": self.telegram_bot_token,
+            "TELEGRAM_CHAT_ID": self.telegram_chat_id,
+            "TELEGRAM_CHANNEL_ID": self.telegram_channel_id,
+            "ENCRYPTION_KEY": self.encryption_key
+        }
+        for name, value in required_vars.items():
+            if not value:
+                logger.error(f"Missing environment variable: {name}")
+                raise ValueError(f"Missing environment variable: {name}")
+
+        # Ensure chat ID is a string (Telegram accepts it as is)
+        self.telegram_chat_id = str(self.telegram_chat_id)
+        self.telegram_channel_id = str(self.telegram_channel_id)
+
+        # Setup encryption
+        try:
+            self.cipher = Fernet(self.encryption_key.encode())
+        except Exception as e:
+            logger.error(f"Invalid ENCRYPTION_KEY: {e}")
+            raise ValueError(f"Invalid ENCRYPTION_KEY: {e}")
+
+        # Setup session
         self.session = requests.Session()
-        self.user_id = None
-        self.running = True
-
-        # Validate required env vars
-        if not all([self.auth_token, self.telegram_bot_token, self.telegram_chat_id, self.telegram_channel_id]):
-            raise ValueError("Missing required environment variables")
-
-        # Set headers
         self.session.headers.update({
-            "Authorization": f"Bearer {self.cipher.decrypt(self._encrypt_token(self.auth_token)).decode()}",
+            "Authorization": f"Bearer {self.auth_token}",  # Use raw token for now
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
         })
-
-    def _encrypt_token(self, token: str) -> bytes:
-        """Encrypt the auth token."""
-        return self.cipher.encrypt(token.encode())
+        self.user_id = None
+        self.running = True
+        logger.info("Bot initialized successfully")
 
     def send_telegram_message(self, message: str, to_channel: bool = False):
-        """Send a message to Telegram chat or channel."""
         bot = Bot(self.telegram_bot_token)
         chat_id = self.telegram_channel_id if to_channel else self.telegram_chat_id
         try:
@@ -52,14 +67,9 @@ class GrassBot:
             logger.error(f"Failed to send Telegram message: {e}")
 
     def sign_in(self) -> bool:
-        """Sign in to Grass API."""
         try:
             self.send_telegram_message("Attempting to sign in to Grass API")
-            headers = {
-            "Authorization": f"Bearer {eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkJseGtPeW9QaWIwMlNzUlpGeHBaN2JlSzJOSEJBMSJ9.eyJ1c2VySWQiOiIydUV1QmI5NjhINXdHaUFpTEdmcUJXUUhoT2YiLCJlbWFpbCI6ImFsc2hhcmplZWpAZ21haWwuY29tIiwic2NvcGUiOiJVU0VSIiwiaWF0IjoxNzQxOTMxNDQ5LCJuYmYiOjE3NDE5MzE0NDksImV4cCI6MTc3MzAzNTQ0OSwiYXVkIjoid3luZC11c2VycyIsImlzcyI6Imh0dHBzOi8vd3luZC5zMy5hbWF6b25hd3MuY29tL3B1YmxpYyJ9.MT_yjM3DXGYV25pyIhfOgZVmq6ulsbVb7DA0LSAVe6zOAXQd7B5DNfojvhGd27vT5uwDrSd_SSsh_DV-9T10SobuTwXaXoDBe36KTM6zLXO9qUO0j9lr3TwIx0EV25-pI3rclvPXvPxA8ArFJ1n8Bo2xfZT3BJz5_tYNg7iKtFN3F_uEsGvJje2B9Rp6lzQdl5GXVMAra1eVYzLz1SQTVqGoptHWkd4xfTZ5YoJ3T-zvhZNUethuvlV8wI4eHqVQf1XBooBb2I9qvZOF8Dj1hcZIr3JKS9nyDq-IsHnGlOXFXPBkwy2JK-DjEY6fif8k90gjxu2RligVmwk0Uki8Ew}"
-            }
-            # Replace '/user' with the correct endpoint after testing
-            response = self.session.get(f"{self.base_url}/user")
+            response = self.session.get(f"{self.base_url}/user")  # Update endpoint later
             response.raise_for_status()
             user_data = response.json()
             self.user_id = user_data.get("userId")
@@ -73,13 +83,11 @@ class GrassBot:
             return False
 
     def get_balance(self):
-        """Fetch current Grass points balance."""
         try:
-            # Adjust endpoint as needed (e.g., '/points' or '/balance')
-            response = self.session.get(f"{self.base_url}/user")  # Temporary, update later
+            response = self.session.get(f"{self.base_url}/user")  # Update endpoint later
             response.raise_for_status()
             data = response.json()
-            balance = data.get("points", 0)  # Adjust key based on API response
+            balance = data.get("points", 0)
             self.send_telegram_message(f"💰 Current Balance: {balance} points", to_channel=True)
             logger.info(f"Balance retrieved: {balance} points")
             return balance
@@ -89,22 +97,16 @@ class GrassBot:
             return None
 
     def run(self):
-        """Main bot loop."""
         self.send_telegram_message("🚜 Auto-Farming Started", to_channel=True)
         while self.running:
             if not self.sign_in():
                 logger.warning("Retrying sign-in in 5 minutes")
                 time.sleep(300)
                 continue
-
             balance = self.get_balance()
             if balance is not None:
                 logger.info("Farming cycle complete")
-            else:
-                logger.warning("Balance fetch failed, retrying")
-
-            # Sleep for 1 hour (adjust as needed)
-            time.sleep(3600)
+            time.sleep(3600)  # 1 hour
 
 def main():
     try:
@@ -112,7 +114,7 @@ def main():
         bot.run()
     except Exception as e:
         logger.error(f"Bot crashed: {e}")
-        time.sleep(300)  # Restart after 5 minutes
+        time.sleep(300)
 
 if __name__ == "__main__":
     main()
