@@ -16,12 +16,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID")
 TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID", "@YourChannelName")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", Fernet.generate_key())  # Generate or set via env
 PROXY = os.getenv("PROXY", "127.0.0.1:8080")
-PUBLIC_PROXIES = [
-    "http://45.76.215.34:8080",
-    "http://103.221.254.102:49617",
-    "http://198.199.86.148:8080"
-    
-]
+PUBLIC_PROXIES = []
 
 
 # Setup logging
@@ -73,6 +68,16 @@ class GrassBot:
         self.session.proxies.update(proxies)
         self.send_telegram_message(f"Using proxy: {proxy_url}")
         logger.info(f"Proxy set to: {proxy_url}")
+        
+        if not proxy_url:  # Skip if proxy is blank
+          self.session.proxies = {}
+          self.send_telegram_message("No proxy set, using direct connection")
+          logger.info("No proxy set, using direct connection")
+          return
+        proxies = {"http": proxy_url, "https": proxy_url}
+        self.session.proxies.update(proxies)
+        self.send_telegram_message(f"Using proxy: {proxy_url}")
+        logger.info(f"Proxy set to: {proxy_url}")    
 
     def _switch_to_public_proxy(self):
         """Fallback to a random public proxy"""
