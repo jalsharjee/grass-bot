@@ -28,17 +28,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class GrassBot:
+        
     def __init__(self, auth_token: str):
         self.base_url = "https://api.getgrass.io"
         self.cipher = Fernet(ENCRYPTION_KEY)
         self.auth_token = self._encrypt_token(auth_token)
-        self.primary_proxy = f"http://{PROXY}"
+        self.primary_proxy = ""  # Start with no proxy
         self.ua = UserAgent()
         self.user_id = None
         self.session_file = "session_snapshot.json"
         self.running = True
         self._initialize_session()
-        self._load_session_snapshot()
+        self._load_session_snapshot()    
 
     def _encrypt_token(self, token: str) -> str:
         """Encrypt the authentication token"""
