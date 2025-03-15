@@ -55,6 +55,9 @@ class GrassBot:
         """Sign in to Grass API."""
         try:
             self.send_telegram_message("Attempting to sign in to Grass API")
+            headers = {
+            "Authorization": f"Bearer {eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkJseGtPeW9QaWIwMlNzUlpGeHBaN2JlSzJOSEJBMSJ9.eyJ1c2VySWQiOiIydUV1QmI5NjhINXdHaUFpTEdmcUJXUUhoT2YiLCJlbWFpbCI6ImFsc2hhcmplZWpAZ21haWwuY29tIiwic2NvcGUiOiJVU0VSIiwiaWF0IjoxNzQxOTMxNDQ5LCJuYmYiOjE3NDE5MzE0NDksImV4cCI6MTc3MzAzNTQ0OSwiYXVkIjoid3luZC11c2VycyIsImlzcyI6Imh0dHBzOi8vd3luZC5zMy5hbWF6b25hd3MuY29tL3B1YmxpYyJ9.MT_yjM3DXGYV25pyIhfOgZVmq6ulsbVb7DA0LSAVe6zOAXQd7B5DNfojvhGd27vT5uwDrSd_SSsh_DV-9T10SobuTwXaXoDBe36KTM6zLXO9qUO0j9lr3TwIx0EV25-pI3rclvPXvPxA8ArFJ1n8Bo2xfZT3BJz5_tYNg7iKtFN3F_uEsGvJje2B9Rp6lzQdl5GXVMAra1eVYzLz1SQTVqGoptHWkd4xfTZ5YoJ3T-zvhZNUethuvlV8wI4eHqVQf1XBooBb2I9qvZOF8Dj1hcZIr3JKS9nyDq-IsHnGlOXFXPBkwy2JK-DjEY6fif8k90gjxu2RligVmwk0Uki8Ew}"
+            }
             # Replace '/user' with the correct endpoint after testing
             response = self.session.get(f"{self.base_url}/user")
             response.raise_for_status()
