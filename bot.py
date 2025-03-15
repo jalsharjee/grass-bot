@@ -49,10 +49,12 @@ class GrassBot:
         return self.cipher.decrypt(self.auth_token.encode()).decode()
 
     def _initialize_session(self):
-        """Initialize session with proxy and rotating User-Agent"""
         self.session = requests.Session()
         self._update_headers()
-        self._set_proxy(self.primary_proxy)
+        if self.primary_proxy:  # Only set proxy if provided
+            self._set_proxy(self.primary_proxy)
+        else:
+            self._set_proxy("")  # Start with direct connection
 
     def _update_headers(self):
         """Rotate User-Agent for each session"""
