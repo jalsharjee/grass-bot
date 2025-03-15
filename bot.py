@@ -64,11 +64,7 @@ class GrassBot:
 
     def _set_proxy(self, proxy_url: str):
         """Set proxy for the session"""
-        proxies = {"http": proxy_url, "https": proxy_url}
-        self.session.proxies.update(proxies)
-        self.send_telegram_message(f"Using proxy: {proxy_url}")
-        logger.info(f"Proxy set to: {proxy_url}")
-        
+            
         if not proxy_url:  # Skip if proxy is blank
           self.session.proxies = {}
           self.send_telegram_message("No proxy set, using direct connection")
@@ -80,7 +76,9 @@ class GrassBot:
         logger.info(f"Proxy set to: {proxy_url}")    
 
     def _switch_to_public_proxy(self):
-        """Fallback to a random public proxy"""
+        if not PUBLIC_PROXIES:  # If list is empty, use direct connection
+            self._set_proxy("")  # Clear proxies for direct connection
+            return ""
         available_proxy = random.choice(PUBLIC_PROXIES)
         self._set_proxy(available_proxy)
         return available_proxy
