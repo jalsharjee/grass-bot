@@ -17,10 +17,12 @@ TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID", "@YourChannelName")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", Fernet.generate_key())  # Generate or set via env
 PROXY = os.getenv("PROXY", "127.0.0.1:8080")
 PUBLIC_PROXIES = [
-    "http://20.235.107.191:3128",
-    "http://154.203.132.55:8080",
-    "http://38.180.78.228:8080"
+    "http://45.76.215.34:8080",
+    "http://103.221.254.102:49617",
+    "http://198.199.86.148:8080"
+    
 ]
+
 
 # Setup logging
 logging.basicConfig(
